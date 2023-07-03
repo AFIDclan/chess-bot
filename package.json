@@ -1,0 +1,15 @@
+{
+  "name": "chess-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ninjapixel/chess": "^1.0.0",
+    "chess": "^1.1.0"
+  }
+}
