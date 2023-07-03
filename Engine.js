@@ -44,13 +44,13 @@ class Engine
         let moves = this.game.validator.moves()
         let moves_verbose = this.game.validator.moves({ verbose: true })
 
-        let {score, index} = this.search(3, this.game.validator)
+        let {score, index} = this.search(2, this.game.validator)
 
         console.log("Best score:", score)
         console.log("Best index:", index)
 
         if (index == -1) return null
-        
+
         let best_move = moves_verbose[index]
 
         return best_move.from + best_move.to
@@ -71,9 +71,9 @@ class Engine
             new_validator.move(move)
             let {score} = this.search(depth - 1, new_validator)
 
-            if (score > best_score)
+            if (-score > best_score)
             {
-                best_score = score
+                best_score = -score
                 best_move_index = i
             }
         })
