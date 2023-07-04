@@ -1,5 +1,9 @@
 let LichessAPI = require('./LichessAPI.js');
 let Engine = require('./Engine.js');
+const { Logger } = require("yalls");
+
+// Create a parent logger
+const log = Logger.console("Kilroy");
 
 let api = new LichessAPI("ZokBot", "lip_QRSo1o94PzkkLJXz1PEK");
 
@@ -10,10 +14,10 @@ api.on("challenge", (c)=>{
 
 api.on("new_game", (g)=>{
 
-    let engine = new Engine(g);
+    let engine = new Engine(g, log);
 
     g.on("move_needed", ()=>{
-        console.log("Move needed.");
+        log.info("Move needed.");
         let move = g.validator.moves({ verbose: true })
 
         //Select random move
@@ -22,7 +26,7 @@ api.on("new_game", (g)=>{
         if (!move) 
             return;
 
-        console.log("MOVE:", move);
+        log.info("Making move: ", move)
         g.make_move(move);
     });
 
@@ -30,5 +34,5 @@ api.on("new_game", (g)=>{
 
 
 
-console.log("Connecting.")
+log.info("Connecting.")
 api.connect();

@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@ninjapixel/chess": "^1.0.0",
-    "chess": "^1.1.0"
+    "chess": "^1.1.0",
+    "yalls": "^0.6.1"
   }
 }
