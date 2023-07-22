@@ -21,12 +21,7 @@ Engines.forEach(async (Engine) => {
     format: "\r:NAMESPACE | :STRING"});
 
 
-    let elog = log.create_child(Engine.name, { log: {
-        debug: process.stdout.write.bind(process.stdout),
-        info: process.stdout.write.bind(process.stdout),
-        warn: process.stdout.write.bind(process.stdout),
-        error: process.stdout.write.bind(process.stdout)
-    }});
+    let elog = log.create_child(Engine.name);
 
     let puzzles = await read_puzzles("./lichess_db_puzzle.csv", 25);
 
@@ -41,7 +36,7 @@ Engines.forEach(async (Engine) => {
             loading_string += (i > Math.round((pass_count+fail_count)/puzzles.length*loading_bar_length)) ? "░" : "█";
 
         
-        stream_log.info(log.f("Testing ", { color: "blue" , blink: true}) + (pass_count + fail_count) + "/" + puzzles.length + "  " + loading_string);
+        stream_log.info(log.f("Testing ", { color: "blue" , blink: true}) + (pass_count + fail_count+1) + "/" + puzzles.length + "  " + loading_string);
         let e = new Engine({
             color: puzzle.fen.split(' ')[1],
             validator: new MoveValidator(puzzle.fen)
