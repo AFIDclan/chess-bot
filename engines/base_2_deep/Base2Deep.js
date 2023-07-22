@@ -1,4 +1,3 @@
-const MoveValidator = require("@ninjapixel/chess").Chess
 const Engine = require("../Engine")
 const piece_values = {
     'p': 100,

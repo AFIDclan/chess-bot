@@ -9,8 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ninjapixel/chess": "^1.0.0",
     "chess": "^1.1.0",
+    "chess.js": "^1.0.0-beta.6",
     "yalls": "^0.6.1"
   }
 }

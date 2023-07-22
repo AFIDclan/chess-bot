@@ -1,5 +1,5 @@
 const Engines = require('./engines');
-const MoveValidator = require("@ninjapixel/chess").Chess
+const MoveValidator = require("chess.js").Chess
 const { Logger } = require("yalls");
 const fs = require('fs');
 const readline = require('readline');
@@ -23,7 +23,7 @@ Engines.forEach(async (Engine) => {
 
     let elog = log.create_child(Engine.name);
 
-    let puzzles = await read_puzzles("./lichess_db_puzzle.csv", 25);
+    let puzzles = await read_puzzles("./lichess_db_puzzle.csv", 50);
 
     let pass_count = 0;
     let fail_count = 0;

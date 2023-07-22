@@ -1,6 +1,6 @@
 let Engine = require('./engines/base_2_deep/Base2Deep.js');
 const { Logger } = require("yalls");
-const MoveValidator = require("@ninjapixel/chess").Chess
+const MoveValidator = require("chess.js").Chess
 
 // Create a parent logger
 const log = Logger.console("Kilroy");

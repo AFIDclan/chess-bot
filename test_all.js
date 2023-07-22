@@ -1,5 +1,5 @@
 const Engines = require('./engines');
-const MoveValidator = require("@ninjapixel/chess").Chess
+const MoveValidator = require("chess.js").Chess
 const { Logger } = require("yalls");
 
 // Create a parent logger
