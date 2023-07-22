@@ -6,32 +6,65 @@ const readline = require('readline');
 
 // Create a parent logger
 const log = Logger.console("Engine Tests", { format: ":NAMESPACE | :STRING" });
+let loading_bar_length = 25;
 
 Engines.forEach(async (Engine) => {
 
     let tests = require("./tests/");
-    let elog = log.create_child(Engine.name);
 
-    let puzzles = await read_puzzles("./lichess_db_puzzle.csv", 300);
+    let stream_log = log.create_child(Engine.name, { log: {
+        debug: process.stdout.write.bind(process.stdout),
+        info: process.stdout.write.bind(process.stdout),
+        warn: process.stdout.write.bind(process.stdout),
+        error: process.stdout.write.bind(process.stdout)
+    }, 
+    format: "\r:NAMESPACE | :STRING"});
+
+
+    let elog = log.create_child(Engine.name, { log: {
+        debug: process.stdout.write.bind(process.stdout),
+        info: process.stdout.write.bind(process.stdout),
+        warn: process.stdout.write.bind(process.stdout),
+        error: process.stdout.write.bind(process.stdout)
+    }});
+
+    let puzzles = await read_puzzles("./lichess_db_puzzle.csv", 25);
 
     let pass_count = 0;
     let fail_count = 0;
 
     for (let puzzle of puzzles)
     {
-        process.stdout.write("\r" + log.f(Engine.name + ": Testing ", { color: "blue" }) + (pass_count + fail_count) + "/" + puzzles.length + "");
+        //stream_log.info(log.f("Testing ", { color: "blue" , blink: true}) + (pass_count + fail_count) + "/" + puzzles.length + "" + " (" + (pass_count / (pass_count + fail_count) * 100) + "%)");
+        let loading_string = ""
+        for (let i=0;i<loading_bar_length;i++)
+            loading_string += (i > Math.round((pass_count+fail_count)/puzzles.length*loading_bar_length)) ? "░" : "█";
+
+        
+        stream_log.info(log.f("Testing ", { color: "blue" , blink: true}) + (pass_count + fail_count) + "/" + puzzles.length + "  " + loading_string);
         let e = new Engine({
             color: puzzle.fen.split(' ')[1],
             validator: new MoveValidator(puzzle.fen)
 
         }, Logger.noop());
 
-        let start = Date.now();
-        let move = e.generate_move();
-        let end = Date.now();
+        let pass = true;
 
-        let pass = move == puzzle.moves[0]
-        //elog.info((pass ? log.f("PASS", { color: "green" }) : log.f("FAIL", { color: "red" })) + " (" + (end - start) + "ms) " + (pass ? "" : log.f("Expected: " + puzzle.moves[0] + " Got: " + move, { color: "red" })));
+        // for (let puzzle_move of puzzle.moves)
+        // {
+        //     let move = e.generate_move();
+
+        //     if (move != puzzle_move)
+        //     {
+        //         pass = false;
+        //         break;
+        //     }
+        // }
+       
+
+        let move = e.generate_move();
+        pass = move == puzzle.moves[0];
+
         if (pass) {
             pass_count++;
         } else {

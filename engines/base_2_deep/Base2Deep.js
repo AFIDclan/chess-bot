@@ -52,15 +52,15 @@ function evaluate_board(color, validator)
 
     let friendly_value = friendly_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        if (p.type == 'p')
-            acc += pawn_position_values[color][p.i][p.j]
+        // if (p.type == 'p')
+        //     acc += pawn_position_values[color][p.i][p.j]
         return acc
     }, 0)
 
     let enemy_value  = enemy_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        if (p.type == 'p')
-            acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        // if (p.type == 'p')
+        //     acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
         return acc
     }, 0)
 
