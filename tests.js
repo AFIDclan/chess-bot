@@ -1,4 +1,4 @@
-let Engine = require('./Engine.js');
+let Engine = require('./engines/base_2_deep/Base2Deep.js');
 const { Logger } = require("yalls");
 const MoveValidator = require("@ninjapixel/chess").Chess
 
@@ -7,10 +7,10 @@ const log = Logger.console("Kilroy");
 
 let tests = [
     {
-        name: "Prevent winning a pawn",
-        fen: "k1b5/1p6/2n5/1B6/3N4/2P5/2P5/K7 b - - 0 6",
+        name: "Rook fork",
+        fen: "r4bk1/3Q1pn1/8/8/2PK4/8/8/2R5 b - - 0 1",
         color: "b",
-        expected: "c8d7"
+        expected: "a8d8"
     }
 ]
 

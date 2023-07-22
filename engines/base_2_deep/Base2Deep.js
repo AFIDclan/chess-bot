@@ -1,5 +1,5 @@
 const MoveValidator = require("@ninjapixel/chess").Chess
-
+const Engine = require("../Engine")
 const piece_values = {
     'p': 100,
     'n': 300,
@@ -52,77 +52,71 @@ function evaluate_board(color, validator)
 
     let friendly_value = friendly_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        // if (p.type == 'p')
-        //     acc += pawn_position_values[color][p.i][p.j]
+        if (p.type == 'p')
+            acc += pawn_position_values[color][p.i][p.j]
         return acc
     }, 0)
 
     let enemy_value  = enemy_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        // if (p.type == 'p')
-        //     acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        if (p.type == 'p')
+            acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
         return acc
     }, 0)
 
     return friendly_value - enemy_value
 }
 
-class Engine
+class Base2Deep extends Engine
 {
-    constructor(game, log)
-    {
-        this.game = game;
-        this.log = log;
-    }
 
     generate_move()
     {
-        let moves = this.game.validator.moves()
-        let moves_verbose = this.game.validator.moves({ verbose: true })
+        this.log.info("Starting score: ", evaluate_board(this.game.color.slice(0, 1), this.game.validator))
 
-        let {score, index} = this.search(4, this.game.validator)
+        this.search_count = 0
 
+        let {move, score, history} = this.search(2, this.game.validator)
+        if (!move) return null
+        this.log.info("Search count: ", this.search_count)
+        this.log.info("Ending score: ", score)
+        this.log.info("Move: ", move.from + move.to)
+        this.log.info("History: ", history.reverse())
 
-        this.log.info("Resulting score: ", score)
-
-        if (index == -1) return null
-
-        let best_move = moves_verbose[index]
-
-        this.best_moves_at_depth = []
-
-        return best_move.from + best_move.to
+        return move.from + move.to
     }
 
     search(depth, validator)
     {
-        // if (!this.best_moves_at_depth[depth])
-        //     this.best_moves_at_depth[depth] = 
-        if (depth == 0) return {score: evaluate_board(this.game.color.slice(0, 1), validator), index: -1}
+        this.search_count++
 
-        let moves = validator.moves()
+        if (depth == 0) return {score: evaluate_board(this.game.color.slice(0, 1), validator), history: []}
 
-        let best_score = -Infinity
-        let best_move_index = -1
+        let moves = validator.moves({verbose: true})
 
-        moves.forEach((move, i) => {
-
+        let results = moves.map((move, i) => {
             validator.move(move)
-            let {score} = this.search(depth - 1, validator)
+            let {score, history} = this.search(depth - 1, validator)
+            
             score = -score
-            validator.undo()
 
-            if (score > best_score)
-            {
-                best_score = score
-                best_move_index = i
-            }
+            validator.undo()
+            
+            history.push(move.from + move.to)
+
+            return {score, move, history}
         })
 
-        return {score: best_score, index: best_move_index}
+        let best_move = results.reduce((acc, r) => {
+            if (r.score > acc.score)
+                return r
+            return acc
+        }, {score: -Infinity, move: null, history: []})
+
+        return best_move
     }
 
 
 }
 
-module.exports = Engine;
+module.exports = Base2Deep;
