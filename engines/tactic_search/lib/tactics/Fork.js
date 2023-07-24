@@ -6,9 +6,6 @@ class Fork extends Tactic
 {
     static from_move(validator, move)
     {
-        // Maybe check to see if the fork is worth it with this?
-        let moving_piece_value = piece_values[move.piece]
-
         let fen = move.after
 
         //Swap the player to move
@@ -23,6 +20,27 @@ class Fork extends Tactic
 
         let v = new MoveValidator(fen)
         let moves = v.moves({ square: move.to, verbose: true })
+
+        moves = moves.filter(m => m.captured)
+
+        moves = moves.map(m => piece_values[m.captured])
+        
+        if (moves.length < 2)
+            return null;
+
+
+        return new Fork(move, Math.min(...moves) )
+    }
+
+    static _from_move(validator, move)
+    {
+        validator.move(move)
+        validator._turn = validator._turn == "w" ? "b" : "w"
+
+        let moves = validator.moves({ square: move.to, verbose: true })
+
+        validator._turn = validator._turn == "w" ? "b" : "w"
+        validator.undo()
 
         moves = moves.filter(m => m.captured)
 

@@ -82,6 +82,8 @@ class Base2Deep extends Engine
         this.log.info("Move: ", move.from + move.to)
         this.log.info("History: ", history.reverse())
 
+        console.log("Search count: ", this.search_count)
+
         return move.from + move.to
     }
 
