@@ -68,55 +68,50 @@ function evaluate_board(color, validator)
 
 class Base2Deep extends Engine
 {
-
     generate_move()
     {
-        this.log.info("Starting score: ", evaluate_board(this.game.color.slice(0, 1), this.game.validator))
+        let start = Date.now();
 
-        this.search_count = 0
+        let best = this.search(2, this.game.validator)
 
-        let {move, score, history} = this.search(2, this.game.validator)
-        if (!move) return null
-        this.log.info("Search count: ", this.search_count)
-        this.log.info("Ending score: ", score)
-        this.log.info("Move: ", move.from + move.to)
-        this.log.info("History: ", history.reverse())
+        let end = Date.now();
 
-        console.log("Search count: ", this.search_count)
+        this.log.info("Resulting score:", best.score/100, "in", end - start, "ms")
+ 
+        if (!best.move) return null
 
-        return move.from + move.to
+        return best.move.from + best.move.to
     }
 
     search(depth, validator)
     {
-        this.search_count++
+        // if (!this.best_moves_at_depth[depth])
+        //     this.best_moves_at_depth[depth] = 
+        let board_eval = evaluate_board(this.game.color.slice(0, 1), validator)
 
-        if (depth == 0) return {score: evaluate_board(this.game.color.slice(0, 1), validator), history: []}
+        if (depth == 0) return {score: board_eval, index: -1}
 
         let moves = validator.moves({verbose: true})
 
-        let results = moves.map((move, i) => {
+        let options = moves.map((move, i) => {
             validator.move(move)
-            let {score, history} = this.search(depth - 1, validator)
-            
+            let {score} = this.search(depth - 1, validator)
             score = -score
-
             validator.undo()
-            
-            history.push(move.from + move.to)
-
-            return {score, move, history}
+            return {score, index: i, move}
         })
 
-        let best_move = results.reduce((acc, r) => {
-            if (r.score > acc.score)
-                return r
+        let best = options.reduce((acc, option) => {
+            if (option.score >= acc.score)
+                return option
             return acc
-        }, {score: -Infinity, move: null, history: []})
+        }, {score: -Infinity, index: -1, move: null})
 
-        return best_move
+        if (best.index == -1)
+            return {score: board_eval, index: -1}
+
+        return best
     }
-
 
 }
 
