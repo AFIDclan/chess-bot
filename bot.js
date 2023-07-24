@@ -37,3 +37,10 @@ api.on("new_game", (g)=>{
 
 log.info("Connecting.")
 api.connect();
+
+setTimeout(()=>{
+
+    let level = Math.ceil(Math.random()*8)
+    log.info("Challanging AI at level " + level + " to a rated game.")
+    //api.challange_ai(level, 1)
+}, 1000)

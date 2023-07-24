@@ -1,6 +1,6 @@
 const EventEmitter = require('events');
 const https = require('https');
-const MoveValidator = require("chess.js").Chess
+const MoveValidator = require("@ninjapixel/chess").Chess
 
 class GameState {
     constructor(game, state) {
@@ -55,8 +55,7 @@ class Game extends EventEmitter{
     }
 
     connect() {
-
-        let req = this.api._get("/api/bot/game/stream/" + this.full_id, (message) => {
+        let req = this.api._get("/api/bot/game/stream/" + (this.full_id ? this.full_id : this.id), (message) => {
             this._on_message(message);
         });
     }
@@ -68,9 +67,7 @@ class Game extends EventEmitter{
 
     _update_state(state) {
         this.state = new GameState(this, state);
-        
-        if (this.state.last_move)
-            this.validator.move(this.state.last_move)
+        this.validator.move(this.state.last_move, {sloppy: true})
 
         this.fen = this.validator.fen()
         this.is_my_turn = this.color.startsWith(this.validator.turn())
@@ -144,28 +141,38 @@ class LichessAPI extends EventEmitter {
                 'Authorization': 'Bearer ' + this.token
             }
         };
+
+        this.disconnect = () => {};
         
     }
 
+    async challange_ai(level, days, rated=true, color=null, fen=null, clock={limit: 180, increment: 2})
+    {
+        let req = { level, days, color, fen, rated, clock };
+
+        let res = await this._post("/api/challenge/ai", (message) => {
+
+            if (message.id && message.initialFen)
+            {
+                this.disconnect();
+
+                setTimeout(()=>{
+                    this.connect();
+                }, 10000);
+            }
+        }, req);
+
+    }
     async connect() {
 
-        // https.get("https:/lichess.org/api/stream/event", this.req_options, (res) => {
-        //     res.on('data', (chunk) => {
-        //       let data = chunk.toString();
-        //       if (data.includes("{") || data.includes("[")) {
-        //         let message = JSON.parse(data);
-        //         this._on_message(message);
-        //       }
-
-        //     });
-        //     res.on('end', () =>{
-        //       this.emit('end');
-        //     });
-        //   });
-
         let req = await this._get("/api/stream/event", (message) => {
-            this._on_message(message);
+            this._on_message(message)
         });
+
+        this.disconnect = () => {
+
+            req.end();
+        }
         
     }
 
@@ -175,29 +182,61 @@ class LichessAPI extends EventEmitter {
 
         Object.assign(options, opts);
 
+        if (options.method == "POST")
+        {
+            
+            if (options.data)
+            {
+                if (!options.headers)
+                    options.headers = {};
+
+                options.headers['Content-Type'] = 'application/json';
+                options.headers['Content-Length'] = JSON.stringify(options.data).length;
+            }
+        }
+
         return new Promise((resolve, reject) => {
 
-            https.get("https:/lichess.org" + path, options, (res) => {
+            let req = https.request("https:/lichess.org" + path, options, (res) => {
                 res.on('data', (chunk) => {
                     let data = chunk.toString();
                     if (data.includes("{") || data.includes("[")) {
-                        try {   
-                            let message = JSON.parse(data);
-                            callback(message);
-                        } catch (e) {
-                            console.log(e);
-                        }
+                    
+                        let messages = data.toString().split("\n").map((line)=>line.trim()).filter((line)=>line.length > 0);
+                        
+                        messages.forEach((message)=>{
+                            try {   
+                                message = JSON.parse(message);
+                                callback(message);
+                            } catch (e) {
+                                console.log(e);
+                                console.log(data);
+                            }
+                        });
+                        
+                    
                     }
                 });
 
                 resolve(res);
             });
 
+            req.on('error', (e) => {
+                console.error(e);
+            });
+
+              
+            if (options.method == "POST" && options.data) 
+                req.write(JSON.stringify(options.data));
+
+            req.end();
+
+
         });
     }
 
-    _post(path, callback) {
-        return this._request(path, callback, {method: "POST"});
+    _post(path, callback, data) {
+        return this._request(path, callback, {method: "POST", data});
     }
 
     _get(path, callback) {

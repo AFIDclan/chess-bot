@@ -8,28 +8,54 @@ const piece_values = {
     'k': 1000
 }
 
+
 const pawn_position_values = {
     'w': [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [50, 50, 50, 50, 50, 50, 50, 50],
         [10, 10, 20, 30, 30, 20, 10, 10],
         [5, 5, 10, 25, 25, 10, 5, 5],
-        [0, 0, 0, 20, 20, 0, 0, 0],
+        [5, 5, 5, 20, 20, 5, 5, 5],
         [5, -5, -10, 0, 0, -10, -5, 5],
         [5, 10, 10, -20, -20, 10, 10, 5],
         [0, 0, 0, 0, 0, 0, 0, 0]
     ],
     'b': [
         [0, 0, 0, 0, 0, 0, 0, 0],
-        [-5, -10, -10, 20, 20, -10, -10, -5],
-        [-5, 5, 10, 0, 0, 10, 5, -5],
-        [0, 0, 0, -20, -20, 0, 0, 0],
-        [-5, -5, -10, -25, -25, -10, -5, -5],
-        [-10, -10, -20, -30, -30, -20, -10, -10],
-        [-50, -50, -50, -50, -50, -50, -50, -50],
+        [5, 10, 10, -20, -20, 10, 10, 5],
+        [5, -5, -10, 0, 0, -10, -5, 5],
+        [5, 5, 5, 20, 20, 5, 5, 5],
+        [5, 5, 10, 25, 25, 10, 5, 5],
+        [10, 10, 20, 30, 30, 20, 10, 10],
+        [50, 50, 50, 50, 50, 50, 50, 50],
         [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+}
+
+
+const knight_position_values = {
+    'w': [
+        [-50, -40, -30, -30, -30, -30, -40, -50],
+        [-40, -20, 0, 0, 0, 0, -20, -40],
+        [-30, 0, 10, 15, 15, 10, 0, -30],
+        [-30, 5, 15, 20, 20, 15, 5, -30],
+        [-30, 0, 15, 20, 20, 15, 0, -30],
+        [-30, 5, 10, 15, 15, 10, 5, -30],
+        [-40, -20, 0, 5, 5, 0, -20, -40],
+        [-50, -40, -30, -30, -30, -30, -40, -50]
+    ],
+    'b': [
+        [-50, -40, -30, -30, -30, -30, -40, -50],
+        [-40, -20, 0, 5, 5, 0, -20, -40],
+        [-30, 5, 10, 15, 15, 10, 5, -30],
+        [-30, 0, 15, 20, 20, 15, 0, -30],
+        [-30, 5, 15, 20, 20, 15, 5, -30],
+        [-30, 0, 10, 15, 15, 10, 0, -30],
+        [-40, -20, 0, 0, 0, 0, -20, -40],
+        [-50, -40, -30, -30, -30, -30, -40, -50]
     ]
 }
+
 
 function evaluate_board(color, validator)
 {
@@ -51,17 +77,27 @@ function evaluate_board(color, validator)
 
     let friendly_value = friendly_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        // if (p.type == 'p')
-        //     acc += pawn_position_values[color][p.i][p.j]
+        if (p.type == 'p')
+            acc += pawn_position_values[color][p.i][p.j]
+        else if (p.type == 'n')
+            acc += knight_position_values[color][p.i][p.j]
         return acc
     }, 0)
 
     let enemy_value  = enemy_peices.reduce((acc, p) => {
         acc += piece_values[p.type]
-        // if (p.type == 'p')
-        //     acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        if (p.type == 'p')
+            acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        else if (p.type == 'n')
+            acc += knight_position_values[color == "w" ? "b" : "w"][p.i][p.j]
         return acc
     }, 0)
+
+    if (validator.isCheckmate())
+        return validator.turn() == color ? -Infinity : Infinity
+
+    if (validator.isStalemate() || validator.isDraw() || validator.isThreefoldRepetition())
+        return 0
 
     return friendly_value - enemy_value
 }
