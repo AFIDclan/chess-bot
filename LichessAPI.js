@@ -1,6 +1,6 @@
 const EventEmitter = require('events');
 const https = require('https');
-const MoveValidator = require("@ninjapixel/chess").Chess
+const MoveValidator = require("chess.js").Chess
 
 class GameState {
     constructor(game, state) {
@@ -67,6 +67,7 @@ class Game extends EventEmitter{
 
     _update_state(state) {
         this.state = new GameState(this, state);
+        if (this.state.last_move.length)
         this.validator.move(this.state.last_move, {sloppy: true})
 
         this.fen = this.validator.fen()

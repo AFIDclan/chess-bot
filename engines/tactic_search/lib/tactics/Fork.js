@@ -1,5 +1,6 @@
 const Tactic = require("../Tactic");
 const MoveValidator = require("chess.js").Chess
+const { fast_moves } = require("../Helpers")
 const piece_values = require("../piece_values.json")
 
 class Fork extends Tactic
@@ -19,11 +20,14 @@ class Fork extends Tactic
         fen = fen.replace(/ [a-h][36] /, " - ")
 
         let v = new MoveValidator(fen)
-        let moves = v.moves({ square: move.to, verbose: true })
+        //console.log("GET moves", move.to)
+        let moves = fast_moves(v, { square: move.to, verbose: true })
 
         moves = moves.filter(m => m.captured)
 
         moves = moves.map(m => piece_values[m.captured])
+
+        moves = moves.filter(m => m > 100)
         
         if (moves.length < 2)
             return null;
