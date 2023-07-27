@@ -9,6 +9,7 @@ const { fast_moves } = require("./lib/Helpers")
 
 const piece_values = require("./lib/piece_values.json")
 
+const Evaluation = require("./lib/Evaluation")
 
 class TacticSearch extends Engine
 {
@@ -39,34 +40,51 @@ class TacticSearch extends Engine
     {
         this.search_count++
 
-        if (depth == 0 || Date.now()-this.search_start > this.max_search_time_ms) return {score: 0, validator}
+        if (depth == 0 || Date.now()-this.search_start > this.max_search_time_ms) return {score: Evaluation.evaluate_board(this.game.color, validator), validator}
 
         //console.log("GET moves ALL")
         let moves = validator.moves({verbose: true})
+        
+        let found_tactics;
 
-        let forks = moves.map(move => Fork.from_move(this.game.validator, move)).filter(f => f)
-        let captures = moves.map(move => Capture.from_move(this.game.validator, move)).filter(f => f)
-        let pins = moves.map(move => Pin.from_move(this.game.validator, move)).filter(f => f)
-        let checks = moves.map(move => Check.from_move(this.game.validator, move)).filter(f => f)
+        // if (this.search_count == 1)
+        // {
+        //     found_tactics = moves.map(move => new Tactic(move, 0)).filter(f => f)
+        // } else {
+            let forks = moves.map(move => Fork.from_move(this.game.validator, move)).filter(f => f)
+            let captures = moves.map(move => Capture.from_move(this.game.validator, move)).filter(f => f)
+            let pins = moves.map(move => Pin.from_move(this.game.validator, move)).filter(f => f)
+            let checks = moves.map(move => Check.from_move(this.game.validator, move)).filter(f => f)
 
-        let found_tactics = forks.concat(captures).concat(pins).concat(checks)
+            found_tactics = forks.concat(captures).concat(pins).concat(checks)
+        //}
+        let first = false
+        if (this.search_count == 1)
+            first = true
+            
 
         if (!found_tactics.length)
-            return {score: 0, validator}
+            return {score:  Evaluation.evaluate_board(this.game.color, validator), validator}
         
 
         let results = found_tactics.map((tactic, i) => {
             validator.move(tactic.move)
             let {score} = this.search(depth - 1, validator)
             
-            score -= tactic.value
+            //score -= tactic.value
             score = -score
-
+            
             validator.undo()
 
             return {score, tactic}
         })
 
+        if (first)
+        {
+            // results.forEach(r => {
+            //     console.log("TACTIC", r.tactic.constructor.name, r.tactic.move.from+r.tactic.move.to , r.score)
+            // })
+        }
 
         let best_move = results.reduce((acc, r) => {
             if (r.score > acc.score)

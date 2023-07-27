@@ -54,7 +54,7 @@ class Fork extends Tactic
             return null;
 
 
-        return new Fork(move, Math.min(...moves) )
+        return new Fork(move, 0)
     }
 }
 

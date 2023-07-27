@@ -13,6 +13,9 @@ class Check extends Tactic
         if (!v.inCheck())
             return null;
         
+        // if (v.isCheckmate())
+        //     return new Check(move, Infinity)
+
         return new Check(move, 0)
     }
 }

@@ -63,7 +63,7 @@ function evaluate_board(color, validator)
 
     let friendly_peices = []
     let enemy_peices = []
-
+    color = validator.turn()
     validator.board().forEach((row, i) => {
         row.forEach((piece, j) => {
             if (piece && piece.color == color)
@@ -108,7 +108,7 @@ class Base2Deep extends Engine
     {
         let start = Date.now();
 
-        let best = this.search(2, this.game.validator)
+        let best = this.search(3, this.game.validator)
 
         let end = Date.now();
 

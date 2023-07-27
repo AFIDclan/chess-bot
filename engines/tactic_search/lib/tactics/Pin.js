@@ -58,12 +58,12 @@ class Pin extends Tactic
                 let pin_value = piece_values[capture.captured]
 
                 if (Math.max(...revealed_values) > pin_value)
-                    return new Pin(move, pin_value)
+                    return new Pin(move, 0)
                 else
                     return 0;
     
             }
-        ).filter(p => p.value > 0)
+        )
 
 
    
