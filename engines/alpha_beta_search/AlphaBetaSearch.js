@@ -1,5 +1,8 @@
 const Engine = require("../Engine")
 const {fast_moves} = require("./Helpers")
+const Pin = require("./lib/tactics/Pin")
+const Fork = require("./lib/tactics/Fork")
+
 
 const piece_values = {
     'p': 100,
@@ -104,13 +107,27 @@ function evaluate_board(validator)
     return friendly_value - enemy_value
 }
 
-class Base2Deep extends Engine
+class Eval
+{
+    constructor(score=-Infinity, move=null)
+    {
+        this.score = score
+        this.move = move
+    }
+
+    negate()
+    {
+        return new Eval(-this.score, this.move)
+    }
+}
+
+class AlphaBetaSearch extends Engine
 {
     generate_move()
     {
         let start = Date.now();
 
-        let best = this.search(3)
+        let best = this.search(5)
 
         let end = Date.now();
 
@@ -121,32 +138,52 @@ class Base2Deep extends Engine
         return best.move.from + best.move.to
     }
 
-    search(depth)
+    search(depth, best_alpha=new Eval(), best_beta=new Eval(Infinity))
     {
         let board_eval = evaluate_board(this.validator)
 
         if (depth == 0) return {score: board_eval, index: -1}
 
-        let moves = fast_moves(this.validator, {verbose: true})
+        let moves = this.validator.moves({verbose: true})
 
-        let options = moves.map((move, i) => {
+        if (depth == 5)
+        {
+            moves = moves.sort((a, b) => {
+        
+                let pin = Pin.from_move(this.validator, a)
+                if (pin)
+                    return -pin.value
+
+                let fork = Fork.from_move(this.validator, a)
+                if (fork)
+                    return -fork.value
+                
+                    
+
+                return 0 
+            })
+        }
+
+        for (let move of moves)
+        {
             this.validator.move(move)
-            let {score} = this.search(depth - 1)
+            let {score} = this.search(depth - 1, best_beta.negate(), best_alpha.negate())
             score = -score
             this.validator.undo()
-            return {score, index: i, move}
-        })
 
-        let best = options.reduce((acc, option) => {
-            if (option.score >= acc.score)
-                return option
-            return acc
-        }, {score: -Infinity, index: -1, move: null})
+            if (score >= best_beta.score)    
+            {          
+                return best_beta
+            }  
+            else if (score > best_alpha.score)
+            {
+                best_alpha = new Eval(score, move)
+            }
+                
 
-        if (best.index == -1)
-            return {score: board_eval, index: -1}
-
-        return best
+        }
+       
+        return best_alpha
     }
 
     get validator()
@@ -157,4 +194,4 @@ class Base2Deep extends Engine
 
 }
 
-module.exports = Base2Deep;
+module.exports = AlphaBetaSearch;
