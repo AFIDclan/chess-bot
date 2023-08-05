@@ -147,7 +147,7 @@ class LichessAPI extends EventEmitter {
         
     }
 
-    async challange_ai(level, days, rated=true, color=null, fen=null, clock={limit: 180, increment: 2})
+    async challange_ai(level, days, rated=true, color=null, fen=null, clock={limit: 360, increment: 2})
     {
         let req = { level, days, color, fen, rated, clock };
 

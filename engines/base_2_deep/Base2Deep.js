@@ -110,7 +110,7 @@ class Base2Deep extends Engine
     {
         let start = Date.now();
 
-        let best = this.search(3)
+        let best = this.search(2)
 
         let end = Date.now();
 

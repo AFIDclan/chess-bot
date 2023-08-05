@@ -1,5 +1,5 @@
 let LichessAPI = require('./LichessAPI.js');
-let Engine = require('./engines/base_2_deep/Base2Deep.js');
+let Engine = require('./engines/alpha_beta_search/AlphaBetaSearch.js');
 //let Engine = require('./engines/tactic_search/TacticSearch.js');
 const { Logger } = require("yalls");
 
