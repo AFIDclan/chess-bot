@@ -1,6 +1,5 @@
 const Engine = require("../Engine")
 const {fast_moves} = require("./Helpers")
-const { Board } = require("../../../jank-chess-js")
 
 const piece_values = {
     'p': 100,
@@ -63,50 +62,81 @@ const knight_position_values = {
 function evaluate_board(validator)
 {
 
+
+    let friendly_peices = []
+    let enemy_peices = []
     color = validator.turn()
+    validator.board().forEach((row, i) => {
+        row.forEach((piece, j) => {
+            if (piece && piece.color == color)
+                friendly_peices.push({type: piece.type, i, j})
+            else if (piece)
+                enemy_peices.push({type: piece.type, i, j})
 
-    let other_color = color == 'w' ? 'b' : 'w'
+        })
+    })
 
-    return  validator.material(color) - validator.material(other_color)
+
+    let friendly_value = friendly_peices.reduce((acc, p) => {
+        acc += piece_values[p.type]
+        if (p.type == 'p')
+            acc += pawn_position_values[color][p.i][p.j]
+        else if (p.type == 'n')
+            acc += knight_position_values[color][p.i][p.j]
+        return acc
+    }, 0)
+
+    let enemy_value  = enemy_peices.reduce((acc, p) => {
+        acc += piece_values[p.type]
+        if (p.type == 'p')
+            acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        else if (p.type == 'n')
+            acc += knight_position_values[color == "w" ? "b" : "w"][p.i][p.j]
+        return acc
+    }, 0)
+
+    if (validator.isCheckmate())
+        return validator.turn() == color ? -Infinity : Infinity
+
+    if (validator.isStalemate() || validator.isDraw() || validator.isThreefoldRepetition())
+        return 0
+
+    return friendly_value - enemy_value
 }
 
-class Base2Deep extends Engine
+class Base2DeepChessJS extends Engine
 {
     generate_move()
     {
-        
-
-        this.board = Board.from_fen(this.validator.fen())
-        this.evaluations = 0
-
         let start = Date.now();
+
+        this.evaluations = 0
 
         let best = this.search(2)
 
         let end = Date.now();
 
         this.log.info("Resulting score:", best.score/100, "in", end - start, "ms")
- 
+
         if (!best.move) return null
 
-        return best.move
+        return best.move.from + best.move.to
     }
 
     search(depth)
     {
         this.evaluations++
-        let board_eval = evaluate_board(this.board)
+        let board_eval = evaluate_board(this.validator)
 
         if (depth == 0) return {score: board_eval, index: -1}
 
-        let moves = this.board.get_moves()
-
+        let moves = fast_moves(this.validator, {verbose: true})
 
         let options = moves.map((move, i) => {
-            this.board.move(move)
+            this.validator.move(move)
             let {score} = this.search(depth - 1)
             score = -score
-            this.board.undo()
+            this.validator.undo()
             return {score, index: i, move}
         })
 
@@ -130,4 +160,4 @@ class Base2Deep extends Engine
 
 }
 
-module.exports = Base2Deep;
+module.exports = Base2DeepChessJS;

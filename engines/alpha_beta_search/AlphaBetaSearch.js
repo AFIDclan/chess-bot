@@ -4,108 +4,21 @@ const Pin = require("./lib/tactics/Pin")
 const Fork = require("./lib/tactics/Fork")
 const Capture = require("./lib/tactics/Capture")
 const Check = require("./lib/tactics/Check")
-
-const piece_values = {
-    'p': 100,
-    'n': 300,
-    'b': 300,
-    'r': 500,
-    'q': 900,
-    'k': 1000
-}
-
-
-const pawn_position_values = {
-    'w': [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [50, 50, 50, 50, 50, 50, 50, 50],
-        [10, 10, 20, 30, 30, 20, 10, 10],
-        [5, 5, 10, 25, 25, 10, 5, 5],
-        [5, 5, 5, 20, 20, 5, 5, 5],
-        [5, -5, -10, 0, 0, -10, -5, 5],
-        [5, 10, 10, -20, -20, 10, 10, 5],
-        [0, 0, 0, 0, 0, 0, 0, 0]
-    ],
-    'b': [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [5, 10, 10, -20, -20, 10, 10, 5],
-        [5, -5, -10, 0, 0, -10, -5, 5],
-        [5, 5, 5, 20, 20, 5, 5, 5],
-        [5, 5, 10, 25, 25, 10, 5, 5],
-        [10, 10, 20, 30, 30, 20, 10, 10],
-        [50, 50, 50, 50, 50, 50, 50, 50],
-        [0, 0, 0, 0, 0, 0, 0, 0]
-        ]
-}
-
-
-const knight_position_values = {
-    'w': [
-        [-50, -40, -30, -30, -30, -30, -40, -50],
-        [-40, -20, 0, 0, 0, 0, -20, -40],
-        [-30, 0, 10, 15, 15, 10, 0, -30],
-        [-30, 5, 15, 20, 20, 15, 5, -30],
-        [-30, 0, 15, 20, 20, 15, 0, -30],
-        [-30, 5, 10, 15, 15, 10, 5, -30],
-        [-40, -20, 0, 5, 5, 0, -20, -40],
-        [-50, -40, -30, -30, -30, -30, -40, -50]
-    ],
-    'b': [
-        [-50, -40, -30, -30, -30, -30, -40, -50],
-        [-40, -20, 0, 5, 5, 0, -20, -40],
-        [-30, 5, 10, 15, 15, 10, 5, -30],
-        [-30, 0, 15, 20, 20, 15, 0, -30],
-        [-30, 5, 15, 20, 20, 15, 5, -30],
-        [-30, 0, 10, 15, 15, 10, 0, -30],
-        [-40, -20, 0, 0, 0, 0, -20, -40],
-        [-50, -40, -30, -30, -30, -30, -40, -50]
-    ]
-}
+// const { Board } = require("../../../jank-chess-js")
+const { Board } = require("jank-chess")
+const worker = require('node:worker_threads'); 
+const { spawn } = require("node:child_process")
+const exec = require('node:child_process').execSync;
 
 
 function evaluate_board(validator)
 {
 
-
-    let friendly_peices = []
-    let enemy_peices = []
     color = validator.turn()
-    validator.board().forEach((row, i) => {
-        row.forEach((piece, j) => {
-            if (piece && piece.color == color)
-                friendly_peices.push({type: piece.type, i, j})
-            else if (piece)
-                enemy_peices.push({type: piece.type, i, j})
 
-        })
-    })
+    let other_color = color == 'w' ? 'b' : 'w'
 
-
-    let friendly_value = friendly_peices.reduce((acc, p) => {
-        acc += piece_values[p.type]
-        if (p.type == 'p')
-            acc += pawn_position_values[color][p.i][p.j]
-        else if (p.type == 'n')
-            acc += knight_position_values[color][p.i][p.j]
-        return acc
-    }, 0)
-
-    let enemy_value  = enemy_peices.reduce((acc, p) => {
-        acc += piece_values[p.type]
-        if (p.type == 'p')
-            acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
-        else if (p.type == 'n')
-            acc += knight_position_values[color == "w" ? "b" : "w"][p.i][p.j]
-        return acc
-    }, 0)
-
-    if (validator.isCheckmate())
-        return validator.turn() == color ? -Infinity : Infinity
-
-    if (validator.isStalemate() || validator.isDraw() || validator.isThreefoldRepetition())
-        return 0
-
-    return friendly_value - enemy_value
+    return  validator.material(color) - validator.material(other_color)
 }
 
 class Eval
@@ -126,62 +39,95 @@ class AlphaBetaSearch extends Engine
 {
     generate_move()
     {
-        let start = Date.now();
 
-        this.max_extention = 2
+        this.board = Board.from_fen(this.validator.fen())
+
+        let start = Date.now();
+        let moves = this.board.get_moves()
+
+
+        // let move_worker = new worker.Worker('./engines/alpha_beta_search/lib/search.js', {workerData: {
+        //     fen: this.validator.fen(),
+        //     starting_moves: [moves[0]]
+        // }})
+        
+        // this.await_worker_search(move_worker)
+        // .then((move) => {
+        //     console.log(move)
+        // })
+
         this.search_start = Date.now()
 
-        let best = this.search(3)
+        // let options = await Promise.all(moves.map((a) => {
+        //     return this.await_worker_search('./engines/alpha_beta_search/lib/search.js', this.validator.fen(), [a])
+        // }))
 
+        
+
+        // console.log("took", end - start, "ms")
+        // console.log(options)
+
+        // let best = options.reduce((a, b) => {
+        //     if (b.score > a.score)
+        //         return b
+        //     return a
+        // })
+
+        this.max_extention = 2
+
+        let best = this.search(8)
         let end = Date.now();
-
         this.log.info("Resulting score:", best.score/100, "in", end - start, "ms")
  
         if (!best.move) return null
 
-        return best.move.from + best.move.to
+        return best.move
     }
 
-    search(depth, best_alpha=new Eval(), best_beta=new Eval(Infinity), extention=0)
+    search(depth, best_alpha=new Eval(), best_beta=new Eval(Infinity), extention=0, starting_move=null)
     {
 
-        if (depth+extention == 0) return {score: evaluate_board(this.validator), index: -1}
+        if (depth+extention == 0) return {score: evaluate_board(this.board), index: -1}
 
         //if (Date.now() - this.search_start > 1000) return {score: evaluate_board(this.validator), index: -1}
+        let moves;
 
-        let moves = this.validator.moves({verbose: true})
+        if (depth == 5 && starting_move)
+            moves = [starting_move]
+        else
+            moves = this.board.get_moves()
 
-        moves = moves.map((a) => {
+        // moves = moves.map((a) => {
     
-            let check = Check.from_move(this.validator, a)
-            if (check)
-                return {...a, value: check.value, extention: 1}
+        //     let check = Check.from_move(this.validator, a)
+        //     if (check)
+        //         return {...a, value: check.value, extention: 1}
 
-            let pin = Pin.from_move(this.validator, a)
-            if (pin)
-                return {...a, value: pin.value, extention: 1}
+        //     let pin = Pin.from_move(this.validator, a)
+        //     if (pin)
+        //         return {...a, value: pin.value, extention: 1}
 
-            let fork = Fork.from_move(this.validator, a)
-            if (fork)
-                return {...a, value: fork.value, extention: 1}
+        //     let fork = Fork.from_move(this.validator, a)
+        //     if (fork)
+        //         return {...a, value: fork.value, extention: 1}
             
-            let capture = Capture.from_move(this.validator, a)
-            if (capture)
-                return {...a, value: capture.value, extention: 0}
+        //     let capture = Capture.from_move(this.validator, a)
+        //     if (capture)
+        //         return {...a, value: capture.value, extention: 0}
                 
 
-            return a
-        })
+        //     return a
+        // })
 
-        moves.sort((a, b) => b.value - a.value)
+        // moves.sort((a, b) => b.value - a.value)
     
 
         for (let move of moves)
         {
-            this.validator.move(move)
+            this.board.move(move)
             let {score} = this.search(depth - 1, best_beta.negate(), best_alpha.negate(), Math.min(extention + (move.extention || 0), this.max_extention))
             score = -score
-            this.validator.undo()
+            this.board.undo()
 
             if (score >= best_beta.score)    
             {          
