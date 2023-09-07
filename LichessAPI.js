@@ -68,7 +68,12 @@ class Game extends EventEmitter{
     _update_state(state) {
         this.state = new GameState(this, state);
         if (this.state.last_move.length)
-        this.validator.move(this.state.last_move, {sloppy: true})
+
+        try {
+            this.validator.move(this.state.last_move, {sloppy: true});
+        } catch (e) {
+            console.log(e);
+        }
 
         this.fen = this.validator.fen()
         this.is_my_turn = this.color.startsWith(this.validator.turn())

@@ -1,6 +1,0 @@
-{
-    "description": "Capture the rook with the bishop",
-    "fen": "r7/8/2B5/8/1P4p1/2K5/4k3/8 w - - 0 1",
-    "color": "w",
-    "expected": "c6a8"
-}
