@@ -1,49 +1,45 @@
 const piece_values = require("./piece_values.json")
+const piece_positions = require("./piece_positions.json")
+
+
+function eval_color(board, c)
+{
+    let pawns = board.get_pawns(c)
+    let knights = board.get_knights(c)
+    let bishops = board.get_bishops(c)
+    let rooks = board.get_rooks(c)
+    let queens = board.get_queens(c)
+    let kings = board.get_kings(c)
+
+    let pawn_val = pawns.reduce((acc, pos) => acc + (piece_values["p"] * piece_positions[c]["p"][pos]), 0)
+    let knight_val = knights.reduce((acc, pos) => acc + (piece_values["n"] * piece_positions[c]["n"][pos]), 0)
+    let bishop_val = bishops.reduce((acc, pos) => acc + (piece_values["b"] * piece_positions[c]["b"][pos]), 0)
+    let rook_val = rooks.reduce((acc, pos) => acc + (piece_values["r"] * piece_positions[c]["r"][pos]), 0)
+    let queen_val = queens.reduce((acc, pos) => acc + (piece_values["q"] * piece_positions[c]["q"][pos]), 0)
+    let king_val = kings.reduce((acc, pos) => acc + (piece_values["k"] * piece_positions[c]["k"][pos]), 0)
+
+    return pawn_val + knight_val + bishop_val + rook_val + queen_val + king_val
+}
+
+piece_positions["b"] =  Object.fromEntries(Object.entries(piece_positions["w"]).map(([k, pos])=>[k, [...pos].reverse()]))
+
 
 class Evaluation
 {
-    static evaluate_board(color, validator)
+    /**
+     * 
+     * @param {Board} board the board to evaluate
+     * @returns {number} the value of the board
+     */
+    static evaluate_board(board)
     {
+
+        let color = board.turn()
         
-        let friendly_peices = []
-        let enemy_peices = []
-        color = validator.turn()
-        validator.board().forEach((row, i) => {
-            row.forEach((piece, j) => {
-                if (piece && piece.color == color)
-                    friendly_peices.push({type: piece.type, i, j})
-                else if (piece)
-                    enemy_peices.push({type: piece.type, i, j})
-    
-            })
-        })
-    
-    
-        let friendly_value = friendly_peices.reduce((acc, p) => {
-            acc += piece_values[p.type]
-            // if (p.type == 'p')
-            //     acc += pawn_position_values[color][p.i][p.j]
-            // else if (p.type == 'n')
-            //     acc += knight_position_values[color][p.i][p.j]
-            return acc
-        }, 0)
-    
-        let enemy_value  = enemy_peices.reduce((acc, p) => {
-            acc += piece_values[p.type]
-            // if (p.type == 'p')
-            //     acc += pawn_position_values[color == "w" ? "b" : "w"][p.i][p.j]
-            // else if (p.type == 'n')
-            //     acc += knight_position_values[color == "w" ? "b" : "w"][p.i][p.j]
-            return acc
-        }, 0)
-    
-        if (validator.isCheckmate())
-            return validator.turn() == color ? -Infinity : Infinity
-    
-        if (validator.isStalemate() || validator.isDraw() || validator.isThreefoldRepetition())
-            return 0
-    
-        return friendly_value - enemy_value
+
+        let other_color = color == 'w' ? 'b' : 'w';
+
+        return eval_color(board, color) - eval_color(board, other_color);
     }
 }
 

@@ -1,25 +1,8 @@
 const Engine = require("../Engine")
-const Pin = require("./lib/tactics/Pin")
-const Fork = require("./lib/tactics/Fork")
-const Capture = require("./lib/tactics/Capture")
-const Check = require("./lib/tactics/Check")
+const Evaluation = require("./lib/Evaluation")
 const { Board } = require("jank-chess");
 
 
-/**
- * 
- * @param {Board} board the board to evaluate
- * @returns {number} the value of the board
- */
-function evaluate_board(board)
-{
-
-    color = board.turn()
-
-    let other_color = color == 'w' ? 'b' : 'w'
-
-    return  board.material(color) - board.material(other_color)
-}
 
 class Eval
 {
@@ -56,12 +39,12 @@ class AlphaBetaSearch extends Engine
     search(depth, best_alpha=new Eval(), best_beta=new Eval(Infinity))
     {
 
-        if (depth == 0) return {score: evaluate_board(this.board), index: -1}
+        if (depth == 0) return {score: Evaluation.evaluate_board(this.board), index: -1}
 
     
         let moves = this.board.get_moves();
 
-        if (moves.length == 0) return {score: evaluate_board(this.board), index: -1}
+        if (moves.length == 0) return {score: Evaluation.evaluate_board(this.board), index: -1}
 
         for (let move of moves)
         {
